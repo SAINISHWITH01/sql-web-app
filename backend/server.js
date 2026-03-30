@@ -12,17 +12,21 @@ app.post("/execute", async (req, res) => {
   try {
     const encodedSQL = Buffer.from(query).toString("base64");
 
-    const reportPath = "/Custom/CloudSQL/CloudSQLReport_csv";
+    const url = `${baseUrl}/xmlpserver/services/rest/v1/reports/Custom/CloudSQL/CloudSQLReport_csv/run`;
 
     const response = await axios.post(
-      `${baseUrl}/xmlpserver/services/rest/v1/reports${reportPath}/run`,
+      url,
       {
-        parameterNameValues: [
-          {
-            name: "sql_query",
-            values: [encodedSQL]
+        reportRequest: {
+          parameterNameValues: {
+            listOfParamNameValues: [
+              {
+                name: "sql_query",
+                values: [encodedSQL]
+              }
+            ]
           }
-        ]
+        }
       },
       {
         auth: {
@@ -35,12 +39,10 @@ app.post("/execute", async (req, res) => {
       }
     );
 
-    const reportData = response.data;
+    // Extract Base64 result
+    const reportBytes = response.data.reportBytes;
 
-    const decoded = Buffer.from(
-      reportData.reportBytes,
-      "base64"
-    ).toString("utf-8");
+    const decoded = Buffer.from(reportBytes, "base64").toString("utf-8");
 
     res.send(decoded);
 
