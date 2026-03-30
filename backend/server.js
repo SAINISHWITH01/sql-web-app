@@ -20,14 +20,18 @@ function buildSOAPRequest(reportPath, encodedSQL) {
         <v2:reportRequest>
           <v2:reportAbsolutePath>${reportPath}</v2:reportAbsolutePath>
           <v2:sizeOfDataChunkDownload>-1</v2:sizeOfDataChunkDownload>
+
           <v2:parameterNameValues>
-            <v2:item>
-              <v2:name>sql_query</v2:name>
-              <v2:values>
-                <v2:item>${encodedSQL}</v2:item>
-              </v2:values>
-            </v2:item>
+            <v2:listOfParamNameValues>
+              <v2:item>
+                <v2:name>sql_query</v2:name>
+                <v2:values>
+                  <v2:item>${encodedSQL}</v2:item>
+                </v2:values>
+              </v2:item>
+            </v2:listOfParamNameValues>
           </v2:parameterNameValues>
+
         </v2:reportRequest>
       </v2:runReport>
     </soapenv:Body>
