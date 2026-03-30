@@ -8,22 +8,37 @@ app.use(cors());
 app.use(express.json());
 
 /**
- * Build SOAP request WITH AUTH HEADER
+ * STEP 1: LOGIN → get session cookie
  */
-function buildSOAPRequest(reportPath, encodedSQL, user, password) {
+async function getSessionCookie(baseUrl, user, password) {
+  const loginRes = await axios.get(
+    `${baseUrl}/analytics/saw.dll?Logon`,
+    {
+      auth: {
+        username: user,
+        password: password
+      },
+      validateStatus: () => true
+    }
+  );
+
+  const cookies = loginRes.headers["set-cookie"];
+  if (!cookies) {
+    throw new Error("Login failed: No session cookie");
+  }
+
+  return cookies.map(c => c.split(";")[0]).join("; ");
+}
+
+/**
+ * STEP 2: Build SOAP
+ */
+function buildSOAP(reportPath, encodedSQL) {
   return `
   <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-    xmlns:v2="http://xmlns.oracle.com/oxp/service/v2"
-    xmlns:wsse="http://schemas.xmlsoap.org/ws/2002/12/secext">
+    xmlns:v2="http://xmlns.oracle.com/oxp/service/v2">
 
-    <soapenv:Header>
-      <wsse:Security>
-        <wsse:UsernameToken>
-          <wsse:Username>${user}</wsse:Username>
-          <wsse:Password>${password}</wsse:Password>
-        </wsse:UsernameToken>
-      </wsse:Security>
-    </soapenv:Header>
+    <soapenv:Header/>
 
     <soapenv:Body>
       <v2:runReport>
@@ -51,35 +66,30 @@ function buildSOAPRequest(reportPath, encodedSQL, user, password) {
 }
 
 /**
- * Execute SQL via BI Publisher
+ * MAIN API
  */
 app.post("/execute", async (req, res) => {
   const { query, user, password, baseUrl } = req.body;
 
   try {
-    // Encode SQL (IMPORTANT)
+    // 🔥 STEP 1: LOGIN
+    const cookie = await getSessionCookie(baseUrl, user, password);
+
+    // 🔥 STEP 2: Encode SQL
     const encodedSQL = Buffer.from(query).toString("base64");
 
     const reportPath = "/Custom/CloudSQL/CloudSQLReport_csv";
 
-    // Build SOAP WITH auth
-    const soapBody = buildSOAPRequest(
-      reportPath,
-      encodedSQL,
-      user,
-      password
-    );
+    const soapBody = buildSOAP(reportPath, encodedSQL);
 
+    // 🔥 STEP 3: CALL BI PUBLISHER WITH COOKIE
     const response = await axios.post(
       `${baseUrl}/xmlpserver/services/v2/ReportService`,
       soapBody,
       {
         headers: {
-          "Content-Type": "text/xml;charset=UTF-8"
-        },
-        auth: {
-          username: user,
-          password: password
+          "Content-Type": "text/xml;charset=UTF-8",
+          Cookie: cookie
         }
       }
     );
@@ -91,9 +101,9 @@ app.post("/execute", async (req, res) => {
     const reportBytes =
       parsed["soapenv:Envelope"]["soapenv:Body"]["ns2:runReportResponse"]["ns2:runReportReturn"]["ns2:reportBytes"];
 
-    const decodedResult = Buffer.from(reportBytes, "base64").toString("utf-8");
+    const decoded = Buffer.from(reportBytes, "base64").toString("utf-8");
 
-    res.send(decodedResult);
+    res.send(decoded);
 
   } catch (err) {
     console.error("ERROR:", err.response?.data || err.message);
