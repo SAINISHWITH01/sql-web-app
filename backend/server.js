@@ -13,23 +13,23 @@ app.use(express.json());
 function buildSOAPRequest(reportPath, encodedSQL) {
   return `
   <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-    xmlns:pub="http://xmlns.oracle.com/oxp/service/PublicReportService">
+    xmlns:v2="http://xmlns.oracle.com/oxp/service/v2">
     <soapenv:Header/>
     <soapenv:Body>
-      <pub:runReport>
-        <pub:reportRequest>
-          <pub:reportAbsolutePath>${reportPath}</pub:reportAbsolutePath>
-          <pub:sizeOfDataChunkDownload>-1</pub:sizeOfDataChunkDownload>
-          <pub:parameterNameValues>
-            <pub:item>
-              <pub:name>sql_query</pub:name>
-              <pub:values>
-                <pub:item>${encodedSQL}</pub:item>
-              </pub:values>
-            </pub:item>
-          </pub:parameterNameValues>
-        </pub:reportRequest>
-      </pub:runReport>
+      <v2:runReport>
+        <v2:reportRequest>
+          <v2:reportAbsolutePath>${reportPath}</v2:reportAbsolutePath>
+          <v2:sizeOfDataChunkDownload>-1</v2:sizeOfDataChunkDownload>
+          <v2:parameterNameValues>
+            <v2:item>
+              <v2:name>sql_query</v2:name>
+              <v2:values>
+                <v2:item>${encodedSQL}</v2:item>
+              </v2:values>
+            </v2:item>
+          </v2:parameterNameValues>
+        </v2:reportRequest>
+      </v2:runReport>
     </soapenv:Body>
   </soapenv:Envelope>
   `;
