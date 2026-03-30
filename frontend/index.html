@@ -10,18 +10,18 @@
   <h3>Connection Details</h3>
 
   <label>Username:</label><br>
-  <input type="text" id="username" placeholder="Enter username"><br><br>
+  <input type="text" id="username" value="KUFPEC_REPORT_USER"><br><br>
 
   <label>Password:</label><br>
-  <input type="password" id="password" placeholder="Enter password"><br><br>
+  <input type="password" id="password" value="Welcome@1088"><br><br>
 
-  <label>Connect String:</label><br>
-  <input type="text" id="connectString" placeholder="localhost/XEPDB1"><br><br>
+  <label>Fusion URL:</label><br>
+  <input type="text" id="baseUrl" value="https://iabhbn-dev1.fa.ocs.oraclecloud.com"><br><br>
 
   <h3>SQL Query</h3>
 
   <textarea id="query" rows="6" cols="60">
-SELECT * FROM employees;
+SELECT * FROM PER_ALL_PEOPLE_F WHERE ROWNUM < 5
   </textarea>
 
   <br><br>
@@ -36,7 +36,7 @@ SELECT * FROM employees;
       const query = document.getElementById("query").value;
       const user = document.getElementById("username").value;
       const password = document.getElementById("password").value;
-      const connectString = document.getElementById("connectString").value;
+      const baseUrl = document.getElementById("baseUrl").value;
 
       try {
         const res = await fetch("http://localhost:4000/execute", {
@@ -48,14 +48,13 @@ SELECT * FROM employees;
             query,
             user,
             password,
-            connectString
+            baseUrl
           })
         });
 
-        const data = await res.json();
+        const text = await res.text();
 
-        document.getElementById("result").innerText =
-          JSON.stringify(data, null, 2);
+        document.getElementById("result").innerText = text;
 
       } catch (error) {
         document.getElementById("result").innerText =
