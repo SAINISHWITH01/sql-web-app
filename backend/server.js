@@ -8,7 +8,6 @@ app.use(express.json());
 app.post("/execute", (req, res) => {
   const { query } = req.body;
 
-  // Dummy response (for now)
   res.json({
     message: "Query received successfully",
     query: query
