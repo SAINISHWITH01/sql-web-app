@@ -8,21 +8,14 @@ app.use(cors());
 app.use(express.json());
 
 /**
- * Build SOAP request for BI Publisher
+ * Build SOAP request (NO AUTH HEADER)
  */
-function buildSOAPRequest(reportPath, encodedSQL, user, password) {
+function buildSOAPRequest(reportPath, encodedSQL) {
   return `
   <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
     xmlns:v2="http://xmlns.oracle.com/oxp/service/v2">
 
-    <soapenv:Header>
-      <v2:Security>
-        <v2:UsernameToken>
-          <v2:Username>${user}</v2:Username>
-          <v2:Password>${password}</v2:Password>
-        </v2:UsernameToken>
-      </v2:Security>
-    </soapenv:Header>
+    <soapenv:Header/>
 
     <soapenv:Body>
       <v2:runReport>
@@ -56,16 +49,12 @@ app.post("/execute", async (req, res) => {
   const { query, user, password, baseUrl } = req.body;
 
   try {
-    // Encode SQL (same as Datafusing)
     const encodedSQL = Buffer.from(query).toString("base64");
 
-    // Your report path (IMPORTANT)
     const reportPath = "/Custom/CloudSQL/CloudSQLReport_csv";
 
-    // Build SOAP request
     const soapBody = buildSOAPRequest(reportPath, encodedSQL);
 
-    // Call Fusion BI Publisher
     const response = await axios.post(
       `${baseUrl}/xmlpserver/services/v2/ReportService`,
       soapBody,
@@ -80,7 +69,6 @@ app.post("/execute", async (req, res) => {
       }
     );
 
-    // Parse XML response
     const parsed = await parseStringPromise(response.data, {
       explicitArray: false
     });
@@ -88,7 +76,6 @@ app.post("/execute", async (req, res) => {
     const reportBytes =
       parsed["soapenv:Envelope"]["soapenv:Body"]["ns2:runReportResponse"]["ns2:runReportReturn"]["ns2:reportBytes"];
 
-    // Decode Base64 result
     const decodedResult = Buffer.from(reportBytes, "base64").toString("utf-8");
 
     res.send(decodedResult);
