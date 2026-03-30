@@ -7,6 +7,19 @@
 
   <h2>SQL Web App 🚀</h2>
 
+  <h3>Connection Details</h3>
+
+  <label>Username:</label><br>
+  <input type="text" id="username" placeholder="Enter username"><br><br>
+
+  <label>Password:</label><br>
+  <input type="password" id="password" placeholder="Enter password"><br><br>
+
+  <label>Connect String:</label><br>
+  <input type="text" id="connectString" placeholder="localhost/XEPDB1"><br><br>
+
+  <h3>SQL Query</h3>
+
   <textarea id="query" rows="6" cols="60">
 SELECT * FROM employees;
   </textarea>
@@ -21,19 +34,33 @@ SELECT * FROM employees;
   <script>
     async function runQuery() {
       const query = document.getElementById("query").value;
+      const user = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const connectString = document.getElementById("connectString").value;
 
-      const res = await fetch("http://localhost:4000/execute", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ query })
-      });
+      try {
+        const res = await fetch("http://localhost:4000/execute", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            query,
+            user,
+            password,
+            connectString
+          })
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      document.getElementById("result").innerText =
-        "Query: " + data.query + "\nMessage: " + data.message;
+        document.getElementById("result").innerText =
+          JSON.stringify(data, null, 2);
+
+      } catch (error) {
+        document.getElementById("result").innerText =
+          "Error: " + error.message;
+      }
     }
   </script>
 
