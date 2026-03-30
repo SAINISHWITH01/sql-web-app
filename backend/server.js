@@ -10,11 +10,20 @@ app.use(express.json());
 /**
  * Build SOAP request for BI Publisher
  */
-function buildSOAPRequest(reportPath, encodedSQL) {
+function buildSOAPRequest(reportPath, encodedSQL, user, password) {
   return `
   <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
     xmlns:v2="http://xmlns.oracle.com/oxp/service/v2">
-    <soapenv:Header/>
+
+    <soapenv:Header>
+      <v2:Security>
+        <v2:UsernameToken>
+          <v2:Username>${user}</v2:Username>
+          <v2:Password>${password}</v2:Password>
+        </v2:UsernameToken>
+      </v2:Security>
+    </soapenv:Header>
+
     <soapenv:Body>
       <v2:runReport>
         <v2:reportRequest>
@@ -35,6 +44,7 @@ function buildSOAPRequest(reportPath, encodedSQL) {
         </v2:reportRequest>
       </v2:runReport>
     </soapenv:Body>
+
   </soapenv:Envelope>
   `;
 }
