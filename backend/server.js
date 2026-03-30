@@ -8,14 +8,22 @@ app.use(cors());
 app.use(express.json());
 
 /**
- * Build SOAP request (NO AUTH HEADER)
+ * Build SOAP request WITH AUTH HEADER
  */
-function buildSOAPRequest(reportPath, encodedSQL) {
+function buildSOAPRequest(reportPath, encodedSQL, user, password) {
   return `
   <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-    xmlns:v2="http://xmlns.oracle.com/oxp/service/v2">
+    xmlns:v2="http://xmlns.oracle.com/oxp/service/v2"
+    xmlns:wsse="http://schemas.xmlsoap.org/ws/2002/12/secext">
 
-    <soapenv:Header/>
+    <soapenv:Header>
+      <wsse:Security>
+        <wsse:UsernameToken>
+          <wsse:Username>${user}</wsse:Username>
+          <wsse:Password>${password}</wsse:Password>
+        </wsse:UsernameToken>
+      </wsse:Security>
+    </soapenv:Header>
 
     <soapenv:Body>
       <v2:runReport>
@@ -49,11 +57,18 @@ app.post("/execute", async (req, res) => {
   const { query, user, password, baseUrl } = req.body;
 
   try {
+    // Encode SQL (IMPORTANT)
     const encodedSQL = Buffer.from(query).toString("base64");
 
     const reportPath = "/Custom/CloudSQL/CloudSQLReport_csv";
 
-    const soapBody = buildSOAPRequest(reportPath, encodedSQL);
+    // Build SOAP WITH auth
+    const soapBody = buildSOAPRequest(
+      reportPath,
+      encodedSQL,
+      user,
+      password
+    );
 
     const response = await axios.post(
       `${baseUrl}/xmlpserver/services/v2/ReportService`,
