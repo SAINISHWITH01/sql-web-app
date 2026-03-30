@@ -1,30 +1,17 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>SQL Web App</title>
-</head>
-<body>
+<script>
+  async function runQuery() {
+    const query = document.getElementById("query").value;
 
-  <h2>SQL Web App 🚀</h2>
+    const res = await fetch("http://localhost:4000/execute", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ query })
+    });
 
-  <textarea id="query" rows="6" cols="60">
-SELECT * FROM employees;
-  </textarea>
-
-  <br><br>
-
-  <button onclick="runQuery()">Run Query</button>
-
-  <h3>Result:</h3>
-  <pre id="result"></pre>
-
-  <script>
-    async function runQuery() {
-      const res = await fetch("http://localhost:4000");
-      const data = await res.text();
-      document.getElementById("result").innerText = data;
-    }
-  </script>
-
-</body>
-</html>
+    const data = await res.json();
+    document.getElementById("result").innerText =
+      "Query: " + data.query + "\nMessage: " + data.message;
+  }
+</script>
